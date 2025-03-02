@@ -57,11 +57,11 @@ export const createFileYAML = CatchAsyncError(
             },
             addresses:
               ethernet.ipMode === "manual" && ethernet.ipAddress
-                ? `[${ethernet.ipAddress}]`
+                ? [ethernet.ipAddress]
                 : undefined,
             gateway4: ethernet.ipGateway || undefined,
             nameservers: ethernet.dnsAddress
-              ? { addresses: `[${ethernet.dnsAddress}]` }
+              ? { addresses: [ethernet.dnsAddress] }
               : undefined,
           },
         };
@@ -96,11 +96,11 @@ export const createFileYAML = CatchAsyncError(
               : undefined,
             addresses:
               wifi.ipMode === "manual" && wifi.ipAddress
-                ? `[${wifi.ipAddress}]`
+                ? [wifi.ipAddress]
                 : undefined,
             gateway4: wifi.ipGateway || undefined,
             nameservers: wifi.dnsAddress
-              ? { addresses: `[${wifi.dnsAddress}]` }
+              ? { addresses: [wifi.dnsAddress] }
               : undefined,
             optional: true,
           },
@@ -114,7 +114,13 @@ export const createFileYAML = CatchAsyncError(
         delete netplanConfig.network.wifis;
       }
 
-      const yamlStr = yaml.dump(netplanConfig);
+      const yamlStr = yaml.dump(netplanConfig, {
+        noArrayIndent: true,
+        flowLevel: -1,
+        styles: {
+          "!!str": "plain",
+        },
+      });
 
       const dirPath = path.resolve(__dirname, "../etc/netplan");
       const filePath = path.join(dirPath, "50-cloud-init.yaml");

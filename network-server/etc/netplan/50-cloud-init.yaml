@@ -1,3 +1,17 @@
 network:
   version: 2
   renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: true
+      dhcp4-overrides:
+        route-metric: 100
+  wifis:
+    wlan0:
+      dhcp4: true
+      dhcp4-overrides:
+        route-metric: 200
+      access-points:
+        wefewffwe:
+          password: efwfew
+      optional: true

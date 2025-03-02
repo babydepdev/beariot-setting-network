@@ -117,7 +117,7 @@ const FormNetworkSetting = () => {
       alert("Please fix the invalid IP addresses.");
       return;
     }
-    const res = await fetch("http://localhost:3000/api/v1/create-file-yaml", {
+    const res = await fetch("http://192.168.20.50:3000/api/v1/create-file-yaml", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -132,7 +132,6 @@ const FormNetworkSetting = () => {
     } else {
       alert("Error");
     }
-    console.log(payload)
   };
 
   return (

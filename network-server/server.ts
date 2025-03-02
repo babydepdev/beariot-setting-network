@@ -3,23 +3,32 @@ import { readdirSync } from "fs";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import cors from "cors";
-const app: Express = express();
+import path from "path";
 
+const app: Express = express();
 dotenv.config();
 
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-  })
-);
+app.use(cors({ origin: "*" }));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-readdirSync("./routes").forEach(async (file) => {
-  const route = await import(`./routes/${file}`);
-  app.use("/api/v1", route.default);
-});
+const loadRoutes = async () => {
+  const routeFiles = readdirSync("./routes").filter(
+    (file) => file.endsWith(".js") || file.endsWith(".ts")
+  );
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+  for (const file of routeFiles) {
+    const route = await import(path.join(__dirname, "routes", file));
+    app.use("/api/v1", route.default);
+  }
+};
+
+loadRoutes()
+  .then(() => console.log("Routes loaded successfully"))
+  .catch((err) => console.error("Error loading routes:", err));
+
+const PORT = process.env.SERVER_PORT || 3000;
+app.listen(Number(PORT), "0.0.0.0", () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });

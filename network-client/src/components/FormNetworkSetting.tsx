@@ -128,11 +128,18 @@ const FormNetworkSetting = () => {
     });
 
     if (res.status === 200) {
-      alert("Success");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "network-config.yaml";
+      a.click();
+      window.URL.revokeObjectURL(url);
+      alert("Download Success");
     } else {
       alert("Error");
     }
-    console.log(payload)
+    console.log(payload);
   };
 
   return (

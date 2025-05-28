@@ -2,8 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { CatchAsyncError } from "../utils/catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
 import yaml from "js-yaml";
-import fs from "fs";
-import path from "path";
 
 interface NetworkSettings {
   ethernet: {
@@ -52,9 +50,11 @@ export const createFileYAML = CatchAsyncError(
         netplanConfig.network.ethernets = {
           eth0: {
             dhcp4: ethernet.ipMode === "auto",
-            "dhcp4-overrides": {
-              "route-metric": ethernet.priority,
-            },
+            ...(ethernet.ipMode === "auto" && {
+              "dhcp4-overrides": {
+                "route-metric": ethernet.priority,
+              },
+            }),
             addresses:
               ethernet.ipMode === "manual" && ethernet.ipAddress
                 ? [ethernet.ipAddress]
@@ -63,6 +63,15 @@ export const createFileYAML = CatchAsyncError(
             nameservers: ethernet.dnsAddress
               ? { addresses: [ethernet.dnsAddress] }
               : undefined,
+            ...(ethernet.ipMode === "manual" && {
+              routes: [
+                {
+                  to: "0.0.0.0/0",
+                  via: ethernet.ipGateway,
+                  metric: ethernet.priority,
+                },
+              ],
+            }),
           },
         };
       }
@@ -84,9 +93,11 @@ export const createFileYAML = CatchAsyncError(
         netplanConfig.network.wifis = {
           wlan0: {
             dhcp4: wifi.ipMode === "auto",
-            "dhcp4-overrides": {
-              "route-metric": wifi.priority,
-            },
+            ...(wifi.ipMode === "auto" && {
+              "dhcp4-overrides": {
+                "route-metric": wifi.priority,
+              },
+            }),
             "access-points": wifi.accessPoint
               ? {
                   [wifi.accessPoint]: {
@@ -103,14 +114,29 @@ export const createFileYAML = CatchAsyncError(
               ? { addresses: [wifi.dnsAddress] }
               : undefined,
             optional: true,
+            ...(wifi.ipMode === "manual" && {
+              routes: [
+                {
+                  to: "0.0.0.0/0",
+                  via: wifi.ipGateway,
+                  metric: wifi.priority,
+                },
+              ],
+            }),
           },
         };
       }
 
-      if (!Object.keys(netplanConfig.network).includes("ethernets")) {
+      if (
+        !netplanConfig.network.ethernets ||
+        Object.keys(netplanConfig.network.ethernets).length === 0
+      ) {
         delete netplanConfig.network.ethernets;
       }
-      if (!Object.keys(netplanConfig.network).includes("wifis")) {
+      if (
+        !netplanConfig.network.wifis ||
+        Object.keys(netplanConfig.network.wifis).length === 0
+      ) {
         delete netplanConfig.network.wifis;
       }
 
@@ -122,28 +148,14 @@ export const createFileYAML = CatchAsyncError(
         },
       });
 
-      const dirPath = path.resolve(__dirname, "../etc/netplan");
-      const filePath = path.join(dirPath, "50-cloud-init.yaml");
+      const buffer = Buffer.from(yamlStr, "utf8");
 
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
-
-      fs.writeFile(filePath, yamlStr, "utf8", (writeError) => {
-        if (writeError) {
-          return next(
-            new ErrorHandler(
-              `Failed to write YAML file: ${writeError.message}`,
-              500
-            )
-          );
-        }
-
-        res.status(200).json({
-          message: "YAML configuration created successfully",
-          yaml: yamlStr,
-        });
-      });
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=network-config.yaml"
+      );
+      res.setHeader("Content-Type", "application/x-yaml");
+      res.status(200).send(buffer);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }

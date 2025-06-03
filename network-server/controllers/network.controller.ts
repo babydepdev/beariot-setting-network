@@ -59,7 +59,7 @@ export const createFileYAML = CatchAsyncError(
               ethernet.ipMode === "manual" && ethernet.ipAddress
                 ? [ethernet.ipAddress]
                 : undefined,
-            gateway4: ethernet.ipGateway || undefined,
+            // gateway4: ethernet.ipGateway || undefined,
             nameservers: ethernet.dnsAddress
               ? { addresses: [ethernet.dnsAddress] }
               : undefined,
@@ -109,7 +109,7 @@ export const createFileYAML = CatchAsyncError(
               wifi.ipMode === "manual" && wifi.ipAddress
                 ? [wifi.ipAddress]
                 : undefined,
-            gateway4: wifi.ipGateway || undefined,
+            // gateway4: wifi.ipGateway || undefined,
             nameservers: wifi.dnsAddress
               ? { addresses: [wifi.dnsAddress] }
               : undefined,

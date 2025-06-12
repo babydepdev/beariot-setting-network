@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { CatchAsyncError } from "../utils/catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
 import yaml from "js-yaml";
+import { CreateFileYAML } from "../utils/CreateFileYAML";
+import { CreateFileText } from "../utils/CreateFileText";
+import { CreateFileJson } from "../utils/CreateFileJson";
 
 interface NetworkSettings {
   ethernet: {
@@ -140,15 +143,15 @@ export const createFileYAML = CatchAsyncError(
         delete netplanConfig.network.wifis;
       }
 
-      const yamlStr = yaml.dump(netplanConfig, {
-        noArrayIndent: true,
-        flowLevel: -1,
-        styles: {
-          "!!str": "plain",
-        },
-      });
+      CreateFileText("./output/network-config.txt", netplanConfig);
+      CreateFileJson("./output/network-config.json", netplanConfig);
+      const yamlStr = CreateFileYAML(
+        "./output/network-config.yaml",
+        netplanConfig,
+        6
+      );
 
-      const buffer = Buffer.from(yamlStr, "utf8");
+      const buffer = Buffer.from(String(yamlStr), "utf8");
 
       res.setHeader(
         "Content-Disposition",

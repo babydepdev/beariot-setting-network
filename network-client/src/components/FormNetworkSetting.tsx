@@ -22,6 +22,8 @@ const FormNetworkSetting = () => {
   const [payload, setPayload] = useState<NetworkSettings>({
     ethernet: {
       enable: false,
+      isSpecialName: false,
+      specialName: "",
       priority: 100,
       ipMode: "auto",
       ipAddress: "",
@@ -43,6 +45,8 @@ const FormNetworkSetting = () => {
       priority: 300,
     },
   });
+
+  console.log(payload);
 
   const handleCheckBoxChange = (e: any) => {
     const { name, checked } = e.target;
@@ -78,7 +82,6 @@ const FormNetworkSetting = () => {
         dnsAddress: "",
       },
     }));
-    console.log(payload);
   };
 
   const handleInputChange = (e: any, networkType: string) => {
@@ -180,6 +183,38 @@ const FormNetworkSetting = () => {
                     </FormControl>
                   </>
                   <>
+                    <FormControlLabel
+                      control={
+                        <Checkbox checked={payload.ethernet.isSpecialName} />
+                      }
+                      label="isSpecialName"
+                      name="isSpecialName"
+                      onChange={(e: any) => {
+                        setPayload((prevPayload) => ({
+                          ...prevPayload,
+                          ethernet: {
+                            ...prevPayload.ethernet,
+                            isSpecialName: e.target.checked,
+                          },
+                        }));
+                      }}
+                    />
+                  </>
+                  {payload.ethernet.isSpecialName && (
+                    <>
+                      <Typography variant="subtitle1" component="h2">
+                        Special Name
+                      </Typography>
+                      <TextField
+                        variant="outlined"
+                        placeholder="eth0"
+                        name="specialName"
+                        required
+                        onChange={(e) => handleInputChange(e, "ethernet")}
+                      />
+                    </>
+                  )}
+                  <>
                     <FormControl>
                       <RadioGroup
                         defaultValue="auto"
@@ -199,6 +234,7 @@ const FormNetworkSetting = () => {
                       </RadioGroup>
                     </FormControl>
                   </>
+
                   {payload.ethernet.ipMode === "manual" && (
                     <>
                       <Typography variant="subtitle1" component="h2">

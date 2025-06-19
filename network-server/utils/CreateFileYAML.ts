@@ -13,6 +13,7 @@ export const CreateFileYAML = async (
       styles: { "!!str": "plain" },
       indent: indent,
     });
+    // console.log(yamlStr);
 
     await fs.writeFile(fileName, yamlStr, "utf8");
     console.log(`YAML file "${fileName}" has been saved.`);

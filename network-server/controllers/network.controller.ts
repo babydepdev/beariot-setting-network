@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { CatchAsyncError } from "../utils/catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
-import yaml from "js-yaml";
 import { CreateFileYAML } from "../utils/CreateFileYAML";
 import { CreateFileText } from "../utils/CreateFileText";
 import { CreateFileJson } from "../utils/CreateFileJson";
@@ -14,6 +13,8 @@ interface NetworkSettings {
     ipAddress?: string;
     ipGateway?: string;
     dnsAddress?: string;
+    isSpecialName: boolean;
+    specialName: string;
   };
   wifi: {
     enable: boolean;
@@ -50,8 +51,11 @@ export const createFileYAML = CatchAsyncError(
       };
 
       if (ethernet && ethernet.enable) {
+        const ethernetInterfaceName: string = ethernet.isSpecialName
+          ? ethernet.specialName
+          : "eth0";
         netplanConfig.network.ethernets = {
-          eth0: {
+          [ethernetInterfaceName]: {
             dhcp4: ethernet.ipMode === "auto",
             ...(ethernet.ipMode === "auto" && {
               "dhcp4-overrides": {
@@ -60,20 +64,17 @@ export const createFileYAML = CatchAsyncError(
             }),
             addresses:
               ethernet.ipMode === "manual" && ethernet.ipAddress
-                ? [ethernet.ipAddress]
+                ? ethernet.ipAddress
                 : undefined,
-            // gateway4: ethernet.ipGateway || undefined,
             nameservers: ethernet.dnsAddress
-              ? { addresses: [ethernet.dnsAddress] }
+              ? { addresses: ethernet.dnsAddress }
               : undefined,
             ...(ethernet.ipMode === "manual" && {
-              routes: [
-                {
-                  to: "0.0.0.0/0",
-                  via: ethernet.ipGateway,
-                  metric: ethernet.priority,
-                },
-              ],
+              routes: {
+                to: "0.0.0.0/0",
+                via: ethernet.ipGateway,
+                metric: ethernet.priority,
+              },
             }),
           },
         };
@@ -110,21 +111,18 @@ export const createFileYAML = CatchAsyncError(
               : undefined,
             addresses:
               wifi.ipMode === "manual" && wifi.ipAddress
-                ? [wifi.ipAddress]
+                ? wifi.ipAddress
                 : undefined,
-            // gateway4: wifi.ipGateway || undefined,
             nameservers: wifi.dnsAddress
-              ? { addresses: [wifi.dnsAddress] }
+              ? { addresses: wifi.dnsAddress }
               : undefined,
             optional: true,
             ...(wifi.ipMode === "manual" && {
-              routes: [
-                {
-                  to: "0.0.0.0/0",
-                  via: wifi.ipGateway,
-                  metric: wifi.priority,
-                },
-              ],
+              routes: {
+                to: "0.0.0.0/0",
+                via: wifi.ipGateway,
+                metric: wifi.priority,
+              },
             }),
           },
         };
@@ -148,7 +146,7 @@ export const createFileYAML = CatchAsyncError(
       const yamlStr = CreateFileYAML(
         "./output/network-config.yaml",
         netplanConfig,
-        6
+        4
       );
 
       const buffer = Buffer.from(String(yamlStr), "utf8");

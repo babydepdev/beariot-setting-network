@@ -1,6 +1,8 @@
 export interface NetworkSettings {
   ethernet: {
     enable: boolean;
+    specialName: string;
+    isSpecialName: boolean;
     priority: number | "";
     ipMode: "auto" | "manual";
     ipAddress: string;
